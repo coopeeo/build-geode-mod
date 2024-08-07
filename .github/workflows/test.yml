@@ -6,20 +6,24 @@ on:
     branches:
       - '**'
 
+env:
+  test-mod-path: example-mod-test
+  test-geode-nightly: false
+
 jobs:
-  fetch-geode-version:
-    name: Get Geode Version
-    runs-on: ubuntu-latest
-    outputs:
-      geode_ver: ${{ steps.get_version.outputs.geode_version }}
-    steps:
-    - name: Get latest release tag
-      id: get_version
-      run: |
-        # Get latest Geode version
-        GEODE_VERSION=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/geode-sdk/geode/releases/latest | jq -r .tag_name)
-        GEODE_VERSION=${GEODE_VERSION#v}
-        echo "geode_version=$GEODE_VERSION" >> $GITHUB_OUTPUT
+  #fetch-geode-version:
+  #  name: Get Geode Version
+  #  runs-on: ubuntu-latest
+  #  outputs:
+  #    geode_ver: ${{ steps.get_version.outputs.geode_version }}
+  #  steps:
+  #  - name: Get latest release tag
+  #    id: get_version
+  #    run: |
+  #      # Get latest Geode version
+  #      GEODE_VERSION=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/geode-sdk/geode/releases/latest | jq -r .tag_name)
+  #      GEODE_VERSION=${GEODE_VERSION#v}
+  #      echo "geode_version=$GEODE_VERSION" >> $GITHUB_OUTPUT
   build:
     strategy:
       fail-fast: false
@@ -38,7 +42,7 @@ jobs:
 
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
-    needs: ['fetch-geode-version']
+    # needs: ['fetch-geode-version']
 
     steps:
       - uses: actions/checkout@v4
@@ -48,10 +52,21 @@ jobs:
           repository: geode-sdk/example-mod
           path: example-mod-test
 
-      - name: Modify Example Mod files
+      - name: Checkout VERSION from geode-sdk/geode
+        uses: actions/checkout@v4
+        with:
+          repository: geode-sdk/geode
+          ref: $(git describe --tags `git rev-list --tags --max-count=1`)
+          sparse-checkout: |
+            VERSION
+          sparse-checkout-cone-mode: false
+
+      - name: Modify Example Mod Files
         shell: bash
         run: |
-          GEODE_VERSION="${{ needs.fetch-geode-version.outputs.geode_ver }}"
+          #GEODE_VERSION="${{ needs.fetch-geode-version.outputs.geode_ver }}"
+          GEODE_VERSION=$(cat VERSION)
+          GEODE_VERSION=${GEODE_VERSION#v}
           if [ $GEODE_VERSION == null ]; then 
             echo "Could not get the latest version for testing"
             exit 1;

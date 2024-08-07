@@ -50,23 +50,39 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: geode-sdk/example-mod
-          path: example-mod-test
+          path: ${{ env.test-mod-path }}
 
       - name: Checkout VERSION from geode-sdk/geode
         uses: actions/checkout@v4
+        if: env.test-geode-nightly == true
         with:
           repository: geode-sdk/geode
-          ref: $(git describe --tags `git rev-list --tags --max-count=1`)
+          ref: nightly
           sparse-checkout: |
             VERSION
           sparse-checkout-cone-mode: false
-          path: geode
+          path: temp-geode
 
       - name: Modify Example Mod Files
         shell: bash
         run: |
+          # get latest tag
+          if [ -d "temp-geode" && ${{ env.test-geode-nightly }} == true ]; then
+            GEODE_VERSION=$(cat temp-geode/VERSION)
+          else
+            if [ -d "temp-geode" ]; then
+              rm -rf temp-geode
+            fi
+            mkdir temp-geode
+            cd temp-geode
+            git init
+            git remote add origin https://github.com/geode-sdk/geode.git
+            git fetch --tags --depth=1
+            GEODE_VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
+          fi
+
           #GEODE_VERSION="${{ needs.fetch-geode-version.outputs.geode_ver }}"
-          GEODE_VERSION=$(cat VERSION)
+          
           GEODE_VERSION=${GEODE_VERSION#v}
           if [ $GEODE_VERSION == null ]; then 
             echo "Could not get the latest version for testing"
@@ -74,7 +90,7 @@ jobs:
           fi
 
           # Set path of mod.json file
-          mod_json_path="example-mod-test/mod.json"
+          mod_json_path="${{ env.test-mod-path }}/mod.json"
 
           # Read the current mod.json content
           mod_json=$(cat $mod_json_path)
@@ -96,13 +112,19 @@ jobs:
 
           # Write updated_mod_json variable contents to mod.json file
           echo $updated_mod_json > $mod_json_path
+          
+          # Write thing to GitHub ENV
+          echo "geode-sdk-type=$(${{ env.test-geode-nightly }} == true ? "nightly" : "given")" >> GITHUB_ENV
+          
+          # Delete temp-geode folder
+          rm -rf temp-geode
 
       - name: Build the mod
         uses: ./
         with:
-          # sdk: nightly
+          sdk: ${{ env.geode-sdk-type }}
           build-config: RelWithDebInfo
-          path: example-mod-test
+          path: ${{ env.test-mod-path }}
           combine: true
           target: ${{ matrix.config.target }}
 

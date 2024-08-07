@@ -10,20 +10,9 @@ env:
   test-mod-path: example-mod-test
   test-geode-nightly: false
 
+  geode-sdk-type: null
+
 jobs:
-  #fetch-geode-version:
-  #  name: Get Geode Version
-  #  runs-on: ubuntu-latest
-  #  outputs:
-  #    geode_ver: ${{ steps.get_version.outputs.geode_version }}
-  #  steps:
-  #  - name: Get latest release tag
-  #    id: get_version
-  #    run: |
-  #      # Get latest Geode version
-  #      GEODE_VERSION=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/geode-sdk/geode/releases/latest | jq -r .tag_name)
-  #      GEODE_VERSION=${GEODE_VERSION#v}
-  #      echo "geode_version=$GEODE_VERSION" >> $GITHUB_OUTPUT
   build:
     strategy:
       fail-fast: false
@@ -42,7 +31,6 @@ jobs:
 
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
-    # needs: ['fetch-geode-version']
 
     steps:
       - uses: actions/checkout@v4
@@ -84,9 +72,6 @@ jobs:
               GEODE_VERSION=${GEODE_VERSION//[$'\t\r\n']}
             fi
           fi
-
-          #GEODE_VERSION="${{ needs.fetch-geode-version.outputs.geode_ver }}"
-          
           GEODE_VERSION=${GEODE_VERSION#v}
           if [ $GEODE_VERSION == null ]; then 
             echo "Could not get the latest version for testing"
@@ -122,6 +107,9 @@ jobs:
           
           # Delete temp-geode folder
           rm -rf temp-geode
+
+          # Print Geode Version
+          echo "Version: $GEODE_VERSION\nNightly?: ${{ env.test-geode-nightly }}""
 
       - name: Build the mod
         uses: ./

@@ -74,11 +74,10 @@ jobs:
               rm -rf temp-geode
             fi
             mkdir temp-geode
-            cd temp-geode
-            git init
-            git remote add origin https://github.com/geode-sdk/geode.git
-            git fetch --tags --depth=1
-            GEODE_VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
+            git -C "temp-geode" init
+            git -C "temp-geode" remote add origin https://github.com/geode-sdk/geode.git
+            git -C "temp-geode" fetch --tags --depth=1
+            GEODE_VERSION=$(git -C "temp-geode" describe --tags `git -C "temp-geode" rev-list --tags --max-count=1`)
           fi
 
           #GEODE_VERSION="${{ needs.fetch-geode-version.outputs.geode_ver }}"

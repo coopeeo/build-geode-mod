@@ -109,7 +109,7 @@ jobs:
           rm -rf temp-geode
 
           # Print Geode Version
-          echo "Version: $GEODE_VERSION\nNightly?: ${{ env.test-geode-nightly }}""
+          echo "Version: $GEODE_VERSION\nNightly?: ${{ env.test-geode-nightly }}"
 
       - name: Build the mod
         uses: ./

@@ -81,7 +81,7 @@ jobs:
             if [ $GEODE_VERSION == "nightly" ]; then
               GEODE_VERSION=$(git -C "temp-geode" describe --tags `git -C "temp-geode" rev-list --tags --max-count=2`)
               GEODE_VERSION=${GEODE_VERSION#nightly}
-              GEODE_VERSION=${GEODE_VERSION#\n}
+              GEODE_VERSION=${GEODE_VERSION//[$'\t\r\n']}
             fi
           fi
 

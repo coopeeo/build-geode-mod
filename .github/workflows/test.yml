@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           # Get Geode version from the previous step
-          GEODE_VERSION=${GEODE_VERSION#v}
+          GEODE_VERSION="${{ needs.fetch-geode-version.outputs.geode_ver }}"
           if [ $GEODE_VERSION == null ]; then 
             echo "Could not get the latest version for testing"
             exit 1;
